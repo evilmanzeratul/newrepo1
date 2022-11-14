@@ -30,6 +30,8 @@ function checkFileExists(adress) {
     }
     catch (error) {
         console.log("nieistnieje");
+        // throw error;
+        throw new Error('wyjebało się na checkFileExists');
         return false;
     }
 }
@@ -76,17 +78,25 @@ function readJsonFile(adress) {
     // zwalidować plik/json
     // jeśli nie istnieje to dodać
     // jeżeli istnieje to dodać kolejne wartości
-    else if (checkJsonInsideFile(adress)) {
+    // else if (checkJsonInsideFile(adress)){ 
+    //   const fileData = fs.readFileSync(adress, 'utf8') 
+    //   return JSON.parse(fileData)
+    // }
+    // else {
+    // console.log("nie ma Jsona")
+    // }
+    try {
+        checkJsonInsideFile(adress);
         const fileData = fs.readFileSync(adress, 'utf8');
         return JSON.parse(fileData);
     }
-    else {
-        console.log("nie ma Jsona");
+    catch (error) {
+        throw new Error('wyjebało się na checkJsonInsideFile');
     }
 }
 console.log(readJsonFile(path2), "gdzie to jest 1"); // tu działa 
 function saveToFile(name, saldo, adress) {
-    const object = readJsonFile(adress);
+    const object = readJsonFile(adress); // tu zaraguj na błąd funkcji 
     const newObject = { ...object };
     newObject[name] = saldo;
     console.log(newObject);

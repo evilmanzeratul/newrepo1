@@ -92,12 +92,21 @@ function readJsonFile (adress: string): object | void{
   // zwalidować plik/json
   // jeśli nie istnieje to dodać
   // jeżeli istnieje to dodać kolejne wartości
-  else if (checkJsonInsideFile(adress)){ 
-    const fileData = fs.readFileSync(adress, 'utf8') 
+  // else if (checkJsonInsideFile(adress)){ 
+  //   const fileData = fs.readFileSync(adress, 'utf8') 
+  //   return JSON.parse(fileData)
+  // }
+  // else {
+  // console.log("nie ma Jsona")
+  // }
+  try{
+    checkJsonInsideFile(adress)
+    const fileData = fs.readFileSync(adress, 'utf8')
     return JSON.parse(fileData)
+
   }
-  else {
-  console.log("nie ma Jsona")
+  catch(error){
+    throw new Error('wyjebało się na checkJsonInsideFile');
   }
 }
 
