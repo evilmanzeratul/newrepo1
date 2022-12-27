@@ -1,124 +1,170 @@
-//npm i node-fetch --save
-
-import axios from "axios";
-import fetch from "node-fetch";
-import fs from 'fs';
-
-const apiUrl: string = "https://www.googleapis.com/books/v1/volumes";
-const phrase: string = "clarkson";
-const cookie: string = "plik.txt";
+import { rejects } from "assert";
+import { resolve } from "path";
 
 
-function functionWithFetch(url: string, data: string) {
-  return fetch(`${url}?q=${data}`, {
-    method: 'GET';
-  })
-}
-
-function getDataFromUrl(url: string, data: string) {
-  return axios.get(`${url}?q=${data}`);
-};
-
-function findPhrase(currentElement: object , phrase: string): boolean {
-  if (currentElement.hasOwnProperty(phrase)) {
-    console.log("true");
-    return true;
-  }
-  else {
-    console.log("false");
-    return false; 
-  }
-}
+const arrayOfPromise = [
+  new Promise((resolve, reject) => setTimeout(() => resolve(1), 600)),
+  new Promise((resolve, reject) => setTimeout(() => resolve(2), 500)),
+  new Promise((resolve, reject) => setTimeout(() => resolve(3), 400)),
+  new Promise((resolve, reject) => setTimeout(() => reject("blad"), 100)),
+  new Promise((resolve, reject) => setTimeout(() => resolve(5), 3000)),
+  new Promise((resolve, reject) => setTimeout(() => resolve(6), 200)),
+  new Promise((resolve, reject) => setTimeout(() => resolve(7), 100))
+]
 
 
-//newObject[clarson]=wynik to co sciagneło z api 
 
-// kind
-// clarkson
-// ala 
 
-// odpowiedzi od api
-// w pliku.txt
-// wynik = { kind: { wynik zapytania z api }
-//   clarkson: { wynik zapytania z api }
-//   ala: { wynik zapytania z api }
-//}
-// wynik.hasOwnProperty('kind')
-
-// DRY - dont repeat yourself
-// 1. brakuje zwracania z pliku jeżeli istnieje.
-// 2. zrób na osobnym branchu w git i zrób PR(pull request) do głównego branchu
-async function fetchAsync(url: string, phrase: string, file: string): Promise<any>{
+// 1. poczytać o błędzie PromiseRejectionHandledWarning: Promise rejection was handled asynchronously
+// 2. Jeśli wystąpi błąd w której kolwiek promisie ma on zostać zwrócony wraz z poprzednimi wynikami z promis niewykonując kolejnych
+//  3. try catch wewnątrz for'a a nie poza nim
+async function recursivePromise(arrayOfPromises: Promise<unknown>[]) {
+  const arrayOfResult: any[] = [];
+  let i = 0
   try {
-    const fileData = fs.readFileSync(file, 'utf8');
-    const objectData = JSON.parse(fileData);
-    // if(objectData[phrase]){
-    if(!findPhrase(objectData,phrase)){
-      const resolve = await functionWithFetch(url, phrase);
-      const jsonResolve = await resolve.json();
-      console.log("1");
-      const newObject:any = {...objectData}; 
-      newObject[phrase]=jsonResolve;
-      fs.writeFileSync(file, JSON.stringify(newObject));
-      return newObject;
-    }
-    else{
-      return objectData;
-    }
-  }
-  catch (reject) {
-    console.log(reject);
-  }
-}
-
-async function axiosAsync(url: string, phrase: string, file: string) :Promise<any>{
-  try {
-    // 1. najpierw sprawdz w pliku a potem sprawdz w api
-    // { adam:120, beata: 40 } - api
-    // mam zapytać o klucz w jsonie
-    // { adam:120 }- plik
-
-    const fileData = fs.readFileSync(file, 'utf8');
-    const objectData = JSON.parse(fileData);
-    
-    if(!findPhrase(objectData,phrase)){
-      const resolve = await getDataFromUrl(url, phrase); // Asiosresponse sprawdz w googlu jak zrobić json ( chce wiedzieć )
-      const jsonResolve = await resolve.data; // zwratca Jsona // zapytaj o to ???
-      console.log("2");
-      const newObject:any = {...objectData}; 
-      newObject[phrase]=jsonResolve;
-      fs.writeFileSync(file, JSON.stringify(newObject));
-      return newObject;
-      }  
-      else {
-        return objectData;
+    for (const promise of arrayOfPromises) {
+      if (i === arrayOfResult.length) {
+        i++
+        const newElement = await promise
+        arrayOfResult.push(newElement)
+        //console.log(i, newElement)
       }
+    }
+  } catch (err) {
+    console.log("element nie został pobrany")
   }
-  catch (reject) {
-    console.log(reject, 'błąd');
-  }
+  return arrayOfResult
 }
+//recursivePromise(arrayOfPromise).then((res)=>console.log(res))
 
-// { adam:120, beata: 40 } - api
-// mam zapytać o klucz w jsonie
-// { adam:120 } - plik
-
-// pytam o beata => strzelic do api
-// jeżeli adam to pobierasz z pliku
-
-// function checkPhrase (regex :RegExp, data : string, file: string ,jsonResolve: any ){
-//   if (!regex.test(data)){
-//     fs.writeFileSync( file, JSON.stringify(jsonResolve))
-//     console.log("axios")
-//   }
+// async function fetchMock(){
+//   let promise = new Promise(() => {
+//     throw 'error fetching result';
+//   });
+//   promise.catch(()=>null); // unused rejection handler
+//   return promise;
 // }
 
 
-async function showResult() {
- const result1 =await fetchAsync(apiUrl, phrase, cookie);
- const result2 =await axiosAsync(apiUrl, phrase, cookie);
- console.log(result1);
- console.log(result2);
+// rekurencja
+
+// function recursivePromise2(arrayOfPromise: Promise<unknown>[]) {
+
+
+//     const arrayORresove: any[] = [];
+//     let a = arrayOfPromise.length
+//     const result = new Promise((resolve, reject) => {
+//       arrayOfPromise.forEach((promise, index) => {
+
+//         promise.then((el) => {
+
+//           arrayORresove[index] = el;
+
+//           if (!arrayORresove.includes(undefined) && arrayORresove.length === arrayOfPromise.length) {
+//             resolve(arrayORresove.splice(0,a))
+//           }
+
+//         }
+//         ).catch(() => {
+//           a = index
+//           console.log("element nie został pobrany")
+//           arrayORresove[index] = "err"
+//         })
+//       })
+//     })
+//     return result
+//   }
+
+
+// trzeba wywalić arr poza funkcje rekurencyjną 
+
+// 5 promisów
+// arr[0].then() => rozpoczyna synchronicznie 5 funkcji które obcinają tablice itp.
+// wewnątrz kodu asynchronicznego w then() rozpoczynasz w jednej chwili kolejne .then()
+
+
+// function recursive(arr: Promise<unknown>[], arrayORresove: any[]) {
+// // function recursive(arr: Promise<unknown>[], arrayORresove: any[], index: number) {
+// // index ++
+//   const result = new Promise((resolve, reject) => {
+//     arr[0].then((el) => {
+//       // 1. wykonaj promise
+//       // 2. obetnij po otrzymaniu wyniku
+//       // 3. jeżeli jest nadal kolejny promise to powtórz
+//       // 4. jak nie ma to rzuć resolve
+//       console.log(el, "element tablicy wypchany")
+//       arrayORresove.push(el)
+//       arr.splice(0, 1);
+
+//       console.log(arr.length, "długość tablicy")
+//     }).then(()=>{
+//       if (arr.length !== 0) {
+//         recursive(arr, arrayORresove)
+//           .then((res) => {
+//             console.log(res, "1.0")
+//             console.log(arrayORresove, "1.1")
+
+//             // recursive(index++);
+//             resolve(res)
+//             resolve(arrayORresove)
+//           }
+
+
+//           ).catch(() => {
+//             console.log(arrayORresove, "2")
+//             resolve(arrayORresove)
+//           })
+//       }
+//       if (arr.length === 0) {
+//         console.log(arrayORresove, "3")
+//         resolve(arrayORresove)
+//       }
+
+//     }).catch(() => {
+
+//       reject("err")
+//     })
+//   })
+//   console.log('dupa');
+  
+//   return result
+// }
+
+function recursive( arrayOfPromise: Promise<unknown>[], arrayORresove: any[], index : number) {
+  // function recursive(arr: Promise<unknown>[], arrayORresove: any[], index: number) {
+  // index ++
+    const result = new Promise((resolve, reject) => {
+      arrayOfPromise[index].then((el) => {
+        arrayORresove.push(el)
+        index++
+        console.log(arrayORresove)
+        if (arrayORresove.length === index && arrayOfPromise.length > index) {
+          recursive(arrayOfPromise, arrayORresove,index).then((res)=>{
+            if(arrayOfPromise.length === arrayORresove.length) {
+              console.log(res, "1" )
+              resolve(res)
+            }
+          }
+        )
+  
+      }}).catch(() => {
+            console.log(arrayORresove, "2" )
+            resolve('test')
+        // reject("err")
+      })
+    })  
+    return result
+  }
+
+
+
+function recursivePromise2(arrayOfPromise: Promise<unknown>[]) {
+let index: number = 0
+  const arr = [...arrayOfPromise]
+  const arrayORresove: any[] = [];
+  return recursive(arr, arrayORresove,index).then((res) => res).catch((err) => err)
+
 }
 
-showResult();
+recursivePromise2(arrayOfPromise).then((res) => console.log(res, "wynik")).catch((err) => err)
+
